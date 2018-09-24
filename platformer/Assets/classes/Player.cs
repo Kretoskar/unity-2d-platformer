@@ -54,7 +54,7 @@ public class Player : MonoBehaviour {
     }
 
     private void Climb() {
-        if (!mFeetCollider2D.IsTouchingLayers(LayerMask.GetMask("Climbing"))) {
+        if (!mBodyCollider2D.IsTouchingLayers(LayerMask.GetMask("Climbing"))) {
             mAnimator.SetBool("Climbing", false);
             mRigidbody.gravityScale = gravityScaleAtStart;
             return;
