@@ -10,27 +10,35 @@ public class Player : MonoBehaviour {
     [SerializeField] private float climbSpeed = 5f;
 
     //state
+    private bool mIsDead;
 
     //cached component references
     private Rigidbody2D mRigidbody;
     private Animator mAnimator;
     private CapsuleCollider2D mBodyCollider2D;
     private BoxCollider2D mFeetCollider2D;
-    private float gravityScaleAtStart;
+    private PlayerStats mPlayerStats;
+    private float mGravityScaleAtStart;
 
     private void Start() {
+        mIsDead = false;
+
         mRigidbody = GetComponent<Rigidbody2D>();
         mAnimator = GetComponent<Animator>();
         mBodyCollider2D = GetComponent<CapsuleCollider2D>();
         mFeetCollider2D = GetComponent<BoxCollider2D>();
-        gravityScaleAtStart = mRigidbody.gravityScale;
+        mPlayerStats = FindObjectOfType<PlayerStats>();
+        mGravityScaleAtStart = mRigidbody.gravityScale;
     }
 
     private void Update() {
-        Climb();
-        Run();
-        Jump();
-        FlipSprite();
+        if (!mIsDead) {
+            Climb();
+            Run();
+            Jump();
+            FlipSprite();
+        }
+        Die();
     }
 
     private void Run() {
@@ -56,7 +64,7 @@ public class Player : MonoBehaviour {
     private void Climb() {
         if (!mBodyCollider2D.IsTouchingLayers(LayerMask.GetMask("Climbing"))) {
             mAnimator.SetBool("Climbing", false);
-            mRigidbody.gravityScale = gravityScaleAtStart;
+            mRigidbody.gravityScale = mGravityScaleAtStart;
             return;
         }
         float controlThrow = Input.GetAxis("Vertical");
@@ -70,6 +78,14 @@ public class Player : MonoBehaviour {
     private void FlipSprite() {
         if(IsPlayerMovingHorizontal()) {
             transform.localScale = new Vector2(Mathf.Sign(mRigidbody.velocity.x), 1f);
+        }
+    }
+
+    private void Die() {
+        if(mPlayerStats.GetCurrHealth() == 0) {
+            mIsDead = true;
+            mRigidbody.velocity = new Vector2(0f, 0f);
+            mAnimator.SetTrigger("Dying");
         }
     }
 
