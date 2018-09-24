@@ -7,6 +7,7 @@ public class Player : MonoBehaviour {
     //config
     [SerializeField] private float mRunSpeed = 5f;
     [SerializeField] private float jumpSpeed = 5f;
+    [SerializeField] private float climbSpeed = 5f;
 
     //state
 
@@ -15,18 +16,21 @@ public class Player : MonoBehaviour {
     private Animator mAnimator;
     private CapsuleCollider2D mBodyCollider2D;
     private BoxCollider2D mFeetCollider2D;
+    private float gravityScaleAtStart;
 
     private void Start() {
         mRigidbody = GetComponent<Rigidbody2D>();
         mAnimator = GetComponent<Animator>();
         mBodyCollider2D = GetComponent<CapsuleCollider2D>();
         mFeetCollider2D = GetComponent<BoxCollider2D>();
+        gravityScaleAtStart = mRigidbody.gravityScale;
     }
 
     private void Update() {
         Run();
-        FlipSprite();
         Jump();
+        Climb();
+        FlipSprite();
     }
 
     private void Run() {
@@ -36,7 +40,7 @@ public class Player : MonoBehaviour {
         Vector2 playerVelocity = new Vector2(controlThrow * mRunSpeed, mRigidbody.velocity.y);
         mRigidbody.velocity = playerVelocity;
 
-        mAnimator.SetBool(runningAnimationName, IsPlayerMoving());
+        mAnimator.SetBool(runningAnimationName, IsPlayerMovingHorizontal());
     }
 
     private void Jump() {
@@ -49,13 +53,27 @@ public class Player : MonoBehaviour {
         }
     }
 
+    private void Climb() {
+        if (!mFeetCollider2D.IsTouchingLayers(LayerMask.GetMask("Climbing"))) {
+            mAnimator.SetBool("Climbing", false);
+            mRigidbody.gravityScale = gravityScaleAtStart;
+            return;
+        }
+        float controlThrow = Input.GetAxis("Vertical");
+        Vector2 climbVelocity = new Vector2(mRigidbody.velocity.x, controlThrow * climbSpeed);
+        mRigidbody.velocity = climbVelocity;
+        mRigidbody.gravityScale = 0;
+
+        mAnimator.SetBool("Climbing", true);
+    }
+
     private void FlipSprite() {
-        if(IsPlayerMoving()) {
+        if(IsPlayerMovingHorizontal()) {
             transform.localScale = new Vector2(Mathf.Sign(mRigidbody.velocity.x), 1f);
         }
     }
 
-    private bool IsPlayerMoving() {
+    private bool IsPlayerMovingHorizontal() {
         return Mathf.Abs(mRigidbody.velocity.x) > Mathf.Epsilon;
     }
 }
